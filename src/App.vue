@@ -5,7 +5,7 @@
       <a-typography-paragraph>
         <div class="wh-full">
           <a-tabs type="line" size="large" class="wh-full flex flex-col" v-model:active-key="tab">
-            <a-tab-pane key="ai" title="AI 提问">
+            <a-tab-pane key="ai" title="自定义请求">
               <a-spin :loading="isLoading" tip="模型输出中" class="wh-full">
                 <Ai :vars="vars" @send-request="sendRequest" />
               </a-spin>
@@ -13,8 +13,16 @@
             <a-tab-pane key="edit" title="代码预览" class="wh-full">
               <Editor ref="editor" v-model:value="docHtml" />
             </a-tab-pane>
-            <a-tab-pane v-if="response" key="render" title="结果预览" class="wh-full">
-              <RenderMd :content="response" class="p-3 pt-0" />
+            <a-tab-pane v-if="response" key="render" title="结果预览" class="wh-full overflow-y-auto">
+              <div class="wh-full overflow-y-auto">
+                <div class="center pb-10">
+                  <button @click="clearResponse"
+                    class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-300 ease-in-out transform hover:scale-105">
+                    清除结果
+                  </button>
+                </div>
+                <RenderMd :content="response" class="p-30 pt-0 " />
+              </div>
             </a-tab-pane>
           </a-tabs>
         </div>
@@ -23,8 +31,18 @@
     <template #second>
       <a-typography-paragraph>
         <div class="wh-full relative">
-          <IFrame :doc-html="docHtml" />
+          <IFrame v-if="refreshShow" :doc-html="docHtml" />
           <div v-show="docMask" class="absolute z-10 inset-0 "></div>
+          <button
+            class="absolute bottom-4 right-4 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
+            @click="handleRefresh">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+              </path>
+            </svg>
+          </button>
         </div>
       </a-typography-paragraph>
     </template>
@@ -40,6 +58,7 @@ import { computed, getCurrentInstance, onMounted, ref, useTemplateRef, watch } f
 import type { ChatOption } from "@/Interface"
 import { Notification } from '@arco-design/web-vue';
 import { useLocalStorage } from '@vueuse/core';
+import { defaultCode } from './Components/Code';
 const tab = ref("ai")
 const size = ref(0.5)
 const editor = useTemplateRef("editor")
@@ -47,6 +66,8 @@ const docHtml = ref("")
 const docMask = ref(false)
 const isLoading = ref(false)
 const response = ref(``)
+
+const refreshShow = ref(true)
 
 useLocalStorage("response", response)
 
@@ -58,7 +79,6 @@ watch(response, (contentResponse: string) => {
   if (!response.value.trim()) {
     tab.value = 'ai'
   }
-
   if (!editor.value) return
   const newHtml = contentResponse.match(/<!DOCTYPE html>[\s\S]*/)?.[0];
   if (!newHtml) return
@@ -69,7 +89,6 @@ watch(response, (contentResponse: string) => {
   } else {
     partialDoc = partialDoc.slice(0, partialDoc.indexOf("</html>") + "</html>".length)
   }
-
   setEditorValue(partialDoc)
 })
 
@@ -81,6 +100,18 @@ const setEditorValue = (value: string) => {
 const addEditorValue = (value: string) => {
   if (!editor.value) return
   editor.value.addValue(value)
+}
+
+const clearResponse = () => {
+  response.value = ""
+  setEditorValue(defaultCode)
+}
+
+const handleRefresh = () => {
+  refreshShow.value = false
+  setTimeout(() => {
+    refreshShow.value = true
+  }, 100);
 }
 
 
@@ -230,5 +261,9 @@ const sendRequest = async (option: ChatOption) => {
 .arco-tabs-content-list,
 .arco-tabs-pane {
   @apply h-full;
+}
+
+.arco-tabs-nav-tab-list {
+  margin-left: 10px;
 }
 </style>

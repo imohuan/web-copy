@@ -1,5 +1,5 @@
 <template>
-  <div v-html="renderedContent" class="wh-full overflow-y-auto select-text markdown-body"></div>
+  <div v-html="renderedContent" class="select-text markdown-body"></div>
 </template>
 
 <script setup lang="ts">

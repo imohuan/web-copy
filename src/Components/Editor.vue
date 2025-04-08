@@ -595,10 +595,11 @@ onMounted(() => {
   //   currentFile.value.content = editor.getValue()
   // });
 
-  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, async function () {
     // 在这里执行保存操作
     if (!currentFile.value || !editor) return
-    currentFile.value.content = editor.getValue()
+    // currentFile.value.content = editor.getValue()
+    currentFile.value.content = await formatCode(editor.getValue(), editor.getModel()?.getLanguageId() ?? "html");
   });
 
   // ctrl+,
@@ -642,19 +643,14 @@ onMounted(() => {
     if (currentFile.value && editor && editor.getValue() !== newCode) {
       const model = editor.getModel()
       if (!model) return
-      editor.executeEdits('my-source', [{
-        range: model.getFullModelRange(),
-        text: newCode ?? ""
-      }]);
+      editor.executeEdits('my-source', [{ range: model.getFullModelRange(), text: newCode ?? "" }]);
     }
   })
 
   modelValue.value = editor.getValue()
 
   onBeforeUnmount(() => {
-    if (editor) {
-      editor.dispose();
-    }
+    if (editor) editor.dispose();
   });
 })
 
