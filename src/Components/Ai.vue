@@ -143,7 +143,7 @@
       <!-- 操作按钮 -->
       <div class="flex justify-between items-center">
         <button @click="sendRequest"
-          class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center"
+          class="px-5 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center"
           :disabled="isLoading">
           <span v-if="isLoading">处理中...</span>
           <span v-else>发送请求</span>
@@ -151,13 +151,13 @@
 
         <div class="flex gap-2">
           <button @click="handleSavePreset"
-            class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center">
+            class="px-5 py-3 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center">
             <span>预设保存</span>
           </button>
 
           <a-popover title="预设列表" trigger="click">
             <button
-              class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center">
+              class="px-5 py-3 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center">
               <span>加载预设</span>
             </button>
             <template #content>
@@ -165,7 +165,7 @@
               <div class="group py-1 min-w-50 hover:bg-slate-200 active:bg-slate-300 px-3 flex justify-between"
                 v-for="(preset, index) in presets" :key="preset.name" @click="handleSelectPreset(preset)">
                 <div class="flex-1 w-full truncate">{{ preset.name }}</div>
-                <button v-if="preset.name !== '默认'" @click="removePreset(index)"
+                <button @click="removePreset(index)"
                   class="text-red-500  bg-white w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <Close class="w-4 h-4" />
                 </button>
