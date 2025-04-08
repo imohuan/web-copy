@@ -4,6 +4,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -31,9 +34,10 @@ jobs:
         run: pnpm build
 
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@3.7.1
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: dist
-          CLEAN: true
+          folder: dist
+          branch: gh-pages
+          clean: true
+          token: ${{ secrets.ACCESS_TOKEN }}
+
