@@ -48,7 +48,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label for="model" class="block text-sm font-medium text-gray-700 mb-1">最大 Token (max_token):</label>
-            <input type="number" id="model" v-model="chatOption.max_token"
+            <input type="number" id="model" v-model="chatOption.max_tokens"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="8192">
           </div>
@@ -222,7 +222,7 @@ const chatOption = ref<ChatOption>({
   token: "",
   model: "",
   temperature: 0.7,
-  max_token: 12000,
+  max_tokens: 12000,
   messages: [],
   stream: false,
   renderMarkdown: true,
@@ -335,7 +335,7 @@ watchEffect(() => {
 watchEffect(() => {
   if (presets.value.length === 0) {
     presets.value.push({
-      max_token: 12000,
+      max_tokens: 12000,
       messages: [
         { role: "system", content: "ONLY USE HTML, CSS AND JAVASCRIPT. If you want to use ICON make sure to import the library first. Try to create the best UI possible by using only HTML, CSS and JAVASCRIPT. Also, try to ellaborate as much as you can, to create something unique. ALWAYS GIVE THE RESPONSE INTO A SINGLE HTML FILE" },
         { role: "user", content: "Vue3 setup syntax, use tailwindcss library, Code extensibility, high-quality code" },

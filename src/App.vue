@@ -134,7 +134,7 @@ const playNotificationSound = () => {
 }
 
 const sendRequest = async (option: ChatOption) => {
-  let { url, token, model, messages, temperature, stream, max_token, renderMarkdown } = option
+  let { url, token, model, messages, temperature, stream, max_tokens, renderMarkdown } = option
   url = url.trim()
   token = token.trim()
   model = model.trim()
@@ -155,7 +155,7 @@ const sendRequest = async (option: ChatOption) => {
   response.value = "加载中..."
 
   // 构建请求体
-  const requestBody = { model, messages, temperature, stream, max_token };
+  const requestBody = { model, messages, temperature, stream, max_tokens };
   // console.log(requestBody);
   // return
   try {

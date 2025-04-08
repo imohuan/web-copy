@@ -4,7 +4,7 @@ export interface ChatOption {
   token: string;
   model: string;
   temperature: number;
-  max_token: number;
+  max_tokens: number;
   messages: { role: string; content: string | ({ type: string; text?: string; image_url?: { url: string } })[] }[];
   stream: boolean;
   renderMarkdown: boolean;
