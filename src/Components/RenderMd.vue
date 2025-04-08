@@ -1,5 +1,8 @@
 <template>
-  <div v-html="renderedContent" class="select-text markdown-body"></div>
+  <!-- <div v-html="renderedContent" class="select-text markdown-body"></div> -->
+  <div class="select-text markdown-body">
+    {{ renderedContent }}
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -9,6 +12,7 @@ import { markedHighlight } from "marked-highlight";
 import hljs from 'highlight.js/lib/common';
 import 'highlight.js/styles/github.css';
 import { useEventListener } from '@vueuse/core';
+import DOMPurify from 'dompurify';
 
 const marked = new Marked(
   markedHighlight({
@@ -21,8 +25,12 @@ const marked = new Marked(
   })
 );
 
+
 const props = defineProps<{ content: string }>();
-const renderedContent = computed(() => marked.parse(props.content))
+const renderedContent = computed(() => {
+  const code = marked.parse(props.content) as string
+  return DOMPurify.sanitize(code)
+})
 
 useEventListener("mousemove", (event: any) => {
   if (event.target.tagName === 'PRE' || event.target.tagName === 'CODE') {

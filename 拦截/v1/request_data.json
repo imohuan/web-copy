@@ -1,0 +1,19 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "ONLY USE HTML, CSS AND JAVASCRIPT. If you want to use ICON make sure to import the library first. Try to create the best UI possible by using only HTML, CSS and JAVASCRIPT. Also, try to ellaborate as much as you can, to create something unique. ALWAYS GIVE THE RESPONSE INTO A SINGLE HTML FILE"
+    },
+    {
+      "role": "user",
+      "content": "Use Vue3 setup syntax, use tailwindcss library, Code extensibility, high-quality code"
+    },
+    {
+      "role": "user",
+      "content": "实现一个极其简单的计数功能"
+    }
+  ],
+  "max_tokens": 12000,
+  "stream": true,
+  "model": "claude-3-7-sonnet-20250219"
+}

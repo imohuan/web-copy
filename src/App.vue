@@ -59,6 +59,7 @@ import type { ChatOption } from "@/Interface"
 import { Notification } from '@arco-design/web-vue';
 import { useLocalStorage } from '@vueuse/core';
 import { defaultCode } from './Components/Code';
+import { getLines, getMessages } from './Request';
 const tab = ref("ai")
 const size = ref(0.5)
 const editor = useTemplateRef("editor")
@@ -78,7 +79,9 @@ const vars = computed(() => ({
 watch(response, (contentResponse: string) => {
   if (!response.value.trim()) {
     tab.value = 'ai'
+    console.log(response.value, "ai");
   }
+
   if (!editor.value) return
   const newHtml = contentResponse.match(/<!DOCTYPE html>[\s\S]*/)?.[0];
   if (!newHtml) return
@@ -133,6 +136,8 @@ const playNotificationSound = () => {
   oscillator.stop(audioContext.currentTime + 0.5)
 }
 
+
+
 const sendRequest = async (option: ChatOption) => {
   let { url, token, model, messages, temperature, stream, max_tokens, renderMarkdown } = option
   url = url.trim()
@@ -182,30 +187,40 @@ const sendRequest = async (option: ChatOption) => {
       }
 
       const reader = result.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      response.value = ""
+      let events: any[] = [];
+      const onChunk = getLines(getMessages(
+        () => {
+        },
+        () => {
+        },
+        (event: any) => events.push(event)
+      ))
 
       try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          // 处理 SSE 格式
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-          for (const line of lines) {
-            try {
-              if (!line.trim() || line.indexOf("[DONE]") !== -1) break
-              const data = JSON.parse(line.substring(6));
-              if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-                const content = data.choices[0].delta.content;
+          if (done) return;
+          onChunk(value)
+
+          for (const event of events) {
+            if (event.data.length > 0) {
+              if (event.data === "[DONE]") return;
+              const data = JSON.parse(event.data);
+
+              if (typeof data === "object" && data !== null && "error" in data) {
+                const errorStr = typeof data.error === "string" ? data.error : typeof data.error === "object" && data.error && "message" in data.error && typeof data.error.message === "string" ? data.error.message : JSON.stringify(data.error);
+                throw new Error(`Error forwarded from backend: ` + errorStr);
+              }
+
+              const content = data['choices'][0]['delta']['content']
+              if (response.value === "加载中...") {
+                response.value = content
+              } else {
                 response.value += content
               }
-            } catch (e) {
-              console.error('解析 SSE 数据出错:', e);
             }
           }
+          events = [];
         }
       } catch {
 

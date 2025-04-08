@@ -318,7 +318,7 @@ const handleSavePreset = () => {
 }
 
 const handleSelectPreset = (preset: ChatOption) => {
-  chatOption.value = preset
+  chatOption.value = JSON.parse(JSON.stringify(preset))
   // document.querySelectorAll(".arco-trigger-popup").forEach(f => f.remove())
 }
 
