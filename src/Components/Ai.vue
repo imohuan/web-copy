@@ -129,19 +129,19 @@
       </div>
 
       <!-- 其他配置 -->
-      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+      <!-- <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
         <h2 class="text-lg font-semibold text-gray-700 mb-3">输出配置</h2>
         <div class="flex gap-10">
           <div class="flex flex-col items-center gap-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">流式输出</label>
             <a-switch v-model="chatOption.stream" />
           </div>
-          <!-- <div class="flex flex-col items-center gap-2">
+          <div class="flex flex-col items-center gap-2">
             <label class="block text-sm font-medium text-gray-700 mb-1">Markdown 渲染</label>
             <a-switch v-model="chatOption.renderMarkdown" />
-          </div> -->
+          </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- 操作按钮 -->
       <div class="flex justify-between items-center">
@@ -224,7 +224,7 @@ const chatOption = ref<ChatOption>({
   temperature: 0.7,
   max_tokens: 12000,
   messages: [],
-  stream: false,
+  stream: true,
   renderMarkdown: true,
   prompt: ""
 })

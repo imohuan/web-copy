@@ -1,7 +1,6 @@
 <template>
-  <!-- <div v-html="renderedContent" class="select-text markdown-body"></div> -->
-  <div class="select-text markdown-body">
-    {{ renderedContent }}
+  <div>
+    <div v-html="renderedContent" class="select-text markdown-body"></div>
   </div>
 </template>
 
@@ -20,15 +19,49 @@ const marked = new Marked(
     langPrefix: 'hljs language-',
     highlight(code, lang, info) {
       const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-      return hljs.highlight(code, { language }).value;
+      return hljs.highlight(unescapeHtml(code), { language }).value;
     }
   })
 );
 
+const unescapeHtml = (safe: string) => {
+  return safe
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'");
+}
+const escapeHtml = (unsafe: string) => {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+const escapeHtmlOutsideCodeBlocks = (text: string) => {
+  const codeBlockRegex = /(`{1,3})[\s\S]*?\1/g;
+  let result = '';
+  let lastIndex = 0;
+  text.replace(codeBlockRegex, (match: string, p1: string, offset: number): any => {
+    // 转义代码块之前的文本
+    result += escapeHtml(text.slice(lastIndex, offset));
+    // 保留代码块
+    result += match;
+    lastIndex = offset + match.length;
+  });
+  // 处理最后一个代码块之后的文本
+  result += escapeHtml(text.slice(lastIndex));
+  return result;
+}
 
 const props = defineProps<{ content: string }>();
 const renderedContent = computed(() => {
-  const code = marked.parse(props.content) as string
+  // 将没有被代码块包裹的html代码进行转义
+  const content = escapeHtmlOutsideCodeBlocks(props.content)
+  const code = marked.parse(content) as string
   return DOMPurify.sanitize(code)
 })
 

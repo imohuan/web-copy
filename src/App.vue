@@ -17,7 +17,7 @@
               <div class="wh-full overflow-y-auto">
                 <div class="center pb-10">
                   <button @click="clearResponse"
-                    class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-300 ease-in-out transform hover:scale-105">
+                    class="px-6 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-300 ease-in-out transform hover:scale-105">
                     清除结果
                   </button>
                 </div>
@@ -79,7 +79,6 @@ const vars = computed(() => ({
 watch(response, (contentResponse: string) => {
   if (!response.value.trim()) {
     tab.value = 'ai'
-    console.log(response.value, "ai");
   }
 
   if (!editor.value) return
@@ -131,12 +130,9 @@ const playNotificationSound = () => {
   gainNode.gain.setValueAtTime(0, audioContext.currentTime)
   gainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.01)
   gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5)
-
   oscillator.start(audioContext.currentTime)
   oscillator.stop(audioContext.currentTime + 0.5)
 }
-
-
 
 const sendRequest = async (option: ChatOption) => {
   let { url, token, model, messages, temperature, stream, max_tokens, renderMarkdown } = option
@@ -173,15 +169,13 @@ const sendRequest = async (option: ChatOption) => {
       })
 
       if (!result.ok) {
-        console.log(result);
-
-        Notification.error({ content: `HTTP error! Status: ${result.status}`, showIcon: true })
+        Notification.error({ content: `HTTP error! Status: ${result.status}`, showIcon: true, duration: 10000 })
         response.value = ""
         return
       }
 
       if (!result || !result.body) {
-        Notification.error({ content: "意外错误", showIcon: true })
+        Notification.error({ content: "意外错误", showIcon: true, duration: 10000 })
         response.value = ""
         return
       }
@@ -236,7 +230,7 @@ const sendRequest = async (option: ChatOption) => {
       })
 
       if (!result.ok) {
-        Notification.error({ content: `HTTP error! Status: ${result.status}`, showIcon: true })
+        Notification.error({ content: `HTTP error! Status: ${result.status}`, showIcon: true, duration: 10000 })
         response.value = ""
         return
       }
@@ -247,12 +241,12 @@ const sendRequest = async (option: ChatOption) => {
         response.value = data.choices[0].message.content
       } else {
         response.value = ""
-        Notification.error({ content: "API返回的数据格式不正确", showIcon: true })
+        Notification.error({ content: "API返回的数据格式不正确", showIcon: true, duration: 10000 })
       }
     }
   } catch (error: any) {
     response.value = ""
-    Notification.error({ content: response.value, showIcon: true })
+    Notification.error({ content: response.value, showIcon: true, duration: 10000 })
   } finally {
     isLoading.value = false;
     playNotificationSound()
