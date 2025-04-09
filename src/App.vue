@@ -13,7 +13,7 @@
             <a-tab-pane key="edit" title="代码预览" class="wh-full">
               <Editor ref="editor" v-model:value="docHtml" />
             </a-tab-pane>
-            <a-tab-pane v-if="response" key="render" title="结果预览" class="wh-full overflow-y-auto">
+            <!-- <a-tab-pane v-if="response" key="render" title="结果预览" class="wh-full overflow-y-auto">
               <div class="wh-full overflow-y-auto">
                 <div class="center pb-10">
                   <button @click="clearResponse"
@@ -24,6 +24,7 @@
                 <RenderMd :content="response" class="p-30 pt-0 " />
               </div>
             </a-tab-pane>
+            -->
           </a-tabs>
         </div>
       </a-typography-paragraph>
@@ -53,7 +54,7 @@
 import Ai from './Components/Ai.vue';
 import Editor from './Components/Editor.vue';
 import IFrame from './Components/IFrame.vue';
-import RenderMd from './Components/RenderMd.vue';
+// import RenderMd from './Components/RenderMd.vue';
 import { computed, getCurrentInstance, onMounted, ref, useTemplateRef, watch } from 'vue';
 import type { ChatOption } from "@/Interface"
 import { Notification } from '@arco-design/web-vue';
@@ -152,7 +153,7 @@ const sendRequest = async (option: ChatOption) => {
     return;
   }
   isLoading.value = true;
-  tab.value = "render"
+  tab.value = "edit"
   response.value = "加载中..."
 
   // 构建请求体
