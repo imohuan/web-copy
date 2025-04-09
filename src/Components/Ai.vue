@@ -311,10 +311,10 @@ const handleSavePreset = () => {
   const index = presets.value.findIndex(item => item.name === chatOption.value.name)
   if (index !== -1) {
     // alert("预设名称已存在")
-    presets.value[index] = chatOption.value
+    presets.value[index] = JSON.parse(JSON.stringify(chatOption.value))
     return
   }
-  presets.value.push(chatOption.value)
+  presets.value.push(JSON.parse(JSON.stringify(chatOption.value)))
 }
 
 const handleSelectPreset = (preset: ChatOption) => {
