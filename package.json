@@ -25,7 +25,7 @@
     "monaco-editor": "^0.52.2",
     "monaco-plugin-emmet": "^1.0.4",
     "monaco-tailwindcss": "^0.6.1",
-    "prettier": "^3.5.3",
+    "prettier": "^3.2.4",
     "sortablejs": "^1.15.6",
     "vue": "^3.5.13",
     "vuedraggable": "^4.1.0"

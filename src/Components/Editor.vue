@@ -17,10 +17,12 @@ import { registerEmmet } from 'monaco-plugin-emmet'
 
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { debounce } from 'lodash-es';
-import { defaultCode } from './Code';
-
+import { DEFAULT_CODE, DEFAULT_FORMAT_OPTIONS } from '@/Helper/Code';
 const editorContainer = useTemplateRef("container");
 let editor: monaco.editor.IStandaloneCodeEditor | null = null;
+
+import FormatWorker from "@/Helper/Format?worker"
+// import { formatCodeForPrettier } from '@/Helper/Format';
 
 interface FileInfo {
   id: number, name: string, language: string, content: string; state?: any
@@ -34,7 +36,7 @@ const files = ref<FileInfo[]>([
     id: 2,
     name: "index.html",
     language: "html",
-    content: defaultCode,
+    content: DEFAULT_CODE,
   },
 ]);
 const fileId = ref(files.value[1].id)
@@ -444,78 +446,171 @@ const autoApplyOptions = debounce(() => {
   }
 }, 1000)
 
-const formatCode = async (code: string, language: string) => {
-  const prettier = await import("prettier/standalone");
-  const plugins = [
-    await import("prettier/parser-html"),
-    await import("prettier/parser-typescript"),
-    await import("prettier/parser-postcss"),
-    await import("prettier/parser-babel"),
-  ];
-
-  let prettierOptions = {}
+const formatCode = async (code: string, language: string): Promise<string> => {
+  // 获取 配置中的 Prettier
+  let prettierOptions: any = {}
   try {
-    prettierOptions = JSON.parse(files.value[0].content).prettier
-  } catch { }
-
-  try {
-    let parser;
-    switch (language) {
-      case "html":
-        parser = "html";
-        break;
-      case "vue":
-        parser = "vue";
-        break;
-      case "typescript":
-      case "ts":
-        parser = "typescript";
-        break;
-      case "javascript":
-      case "js":
-        parser = "babel";
-        break;
-      default:
-        parser = "babel";
-    }
-    // 使用 Prettier 格式化代码
-    const formattedCode = await prettier.format(code, {
-      parser,
-      plugins,
-      semi: true,
-      singleQuote: true,
-      tabWidth: 2,
-      printWidth: 80,
-      ...prettierOptions
-    });
-
-    console.log({
-      parser,
-      plugins,
-      semi: true,
-      singleQuote: true,
-      tabWidth: 2,
-      printWidth: 80,
-      ...prettierOptions
-    });
-
-    console.log("AI formatted successfully!");
-    return formattedCode
+    const configContent = files.value[0].content;
+    const config = JSON.parse(configContent);
+    prettierOptions = config.prettier || {};
+    
   } catch (error) {
-    console.error("Error formatting code:", error);
-    return code
+    console.error("读取配置失败:", error);
+    prettierOptions = { ...DEFAULT_FORMAT_OPTIONS };
+  }
+  
+  // 使用Web Worker执行格式化
+  const worker = new FormatWorker()
+  return new Promise((resolve) => {
+    const id = Math.ceil(Math.random() * 100000)
+    worker.addEventListener('message', (event) => {
+      const { id: _id, code } = event.data;
+      if (id === _id) resolve(code);
+      worker.terminate();
+    });
+    worker.postMessage({ id, code, language, options: prettierOptions });
+  });
+}
+
+// 自定义格式化
+const registerFormatProvider = () => {
+  monaco.languages.registerDocumentFormattingEditProvider('html', {
+    async provideDocumentFormattingEdits(model, options, token) {
+      const text = model.getValue();
+      try {
+        // 确保HTML格式化能够处理内嵌JavaScript
+        const formatted = await formatCode(text, "html");
+        if (formatted && formatted !== text) {
+          return [{ range: model.getFullModelRange(), text: formatted }];
+        }
+      } catch (error) {
+        console.error("HTML格式化失败:", error);
+      }
+      return [];
+    }
+  });
+
+  // 为JavaScript/TypeScript添加格式化提供程序，增强内嵌脚本格式化能力
+  monaco.languages.registerDocumentFormattingEditProvider('javascript', {
+    async provideDocumentFormattingEdits(model, options, token) {
+      const text = model.getValue();
+      try {
+        const formatted = await formatCode(text, "javascript");
+        if (formatted && formatted !== text) {
+          return [{ range: model.getFullModelRange(), text: formatted }];
+        }
+      } catch (error) {
+        console.error("JavaScript格式化失败:", error);
+      }
+      return [];
+    }
+  });
+}
+
+// 自定义HTML代码折叠
+const registerFoldingRangeProvider = () => {
+    // 配置HTML折叠策略，使script标签内的代码可折叠
+    monaco.languages.registerFoldingRangeProvider('html', {
+    provideFoldingRanges(model, context, token) {
+      const text = model.getValue();
+      const ranges = [];
+      
+      // 查找所有script标签
+      const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+      let match;
+      
+      while ((match = scriptRegex.exec(text)) !== null) {
+        if (match.index === scriptRegex.lastIndex) {
+          scriptRegex.lastIndex++;
+        }
+        
+        // 计算起始行和结束行
+        const startLine = model.getPositionAt(match.index).lineNumber;
+        const endLine = model.getPositionAt(match.index + match[0].length).lineNumber;
+        
+        // 添加折叠区域
+        if (endLine > startLine) {
+          ranges.push({
+            start: startLine,
+            end: endLine,
+            kind: monaco.languages.FoldingRangeKind.Region
+          });
+          
+          // 如果script标签内容有多行，也为内部代码添加折叠
+          const scriptContent = match[1];
+          const scriptStartOffset = match.index + match[0].indexOf(scriptContent);
+          const scriptLines = scriptContent.split('\n');
+          
+          if (scriptLines.length > 2) {
+            let innerStart = -1;
+            let innerDepth = 0;
+            
+            // 分析script内部代码结构，寻找可折叠块
+            for (let i = 0; i < scriptLines.length; i++) {
+              const line = scriptLines[i];
+              const lineStartPos = model.getPositionAt(scriptStartOffset + scriptContent.indexOf(line)).lineNumber;
+              
+              // 简单的折叠逻辑 - 检测{}括号
+              if (line.includes('{')) {
+                if (innerStart === -1) {
+                  innerStart = lineStartPos;
+                }
+                innerDepth++;
+              }
+              
+              if (line.includes('}') && innerDepth > 0) {
+                innerDepth--;
+                if (innerDepth === 0 && innerStart !== -1) {
+                  const innerEndPos = lineStartPos;
+                  if (innerEndPos > innerStart) {
+                    ranges.push({
+                      start: innerStart,
+                      end: innerEndPos,
+                      kind: monaco.languages.FoldingRangeKind.Region
+                    });
+                  }
+                  innerStart = -1;
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      return ranges;
+    }
+  });
+
+}
+
+
+const updateCode = () => {
+  if (!currentFile.value || !editor) return
+  const value = editor.getValue() || "";
+  currentFile.value.content = value
+
+  autoApplyOptions()
+  if (currentFile.value.name === "index.html") {
+    modelValue.value = value
   }
 }
 
 onMounted(() => {
   if (!editorContainer.value) return
-
   registerTwTheme()
   registerJsonSchema()
-
   registerEmmet(monaco as any, ['html'], {
     html: { card: '.card>.card-body{${0}}' }
   })
+  registerFoldingRangeProvider()
+
+  monaco.editor.onDidCreateEditor((editor) => {
+    console.log('Monaco 编辑器已成功启动');
+    setTimeout(() => {
+      console.log('Monaco 自定义格式化');
+      registerFormatProvider()
+    }, 1000);
+  });
 
   self.MonacoEnvironment = {
     getWorker(_, label) {
@@ -564,30 +659,15 @@ onMounted(() => {
       preview: true, // 显示预览
       showDeprecated: false, // 不显示废弃项
     },
-    prettier: {
-      semi: true,
-      singleQuote: true,
-      tabWidth: 2,
-      printWidth: 80,
-    },
+    prettier: DEFAULT_FORMAT_OPTIONS,
   }
-
   files.value[0].content = JSON.stringify(defaultOptions, null, 2)
   // 创建编辑器实例
   editor = monaco.editor.create(editorContainer.value, {
     model: getFileModel(),
     ...defaultOptions
   });
-
-  editor.onDidChangeModelContent(() => {
-    if (!currentFile.value || !editor) return
-    const value = editor.getValue() || "";
-    currentFile.value.content = value
-    autoApplyOptions()
-    if (currentFile.value.name === "index.html") {
-      modelValue.value = value
-    }
-  });
+  editor.onDidChangeModelContent(() => updateCode());
 
   // editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
   //   // 在这里执行保存操作
@@ -596,10 +676,10 @@ onMounted(() => {
   // });
 
   editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, async function () {
-    // 在这里执行保存操作
     if (!currentFile.value || !editor) return
-    // currentFile.value.content = editor.getValue()
-    currentFile.value.content = await formatCode(editor.getValue(), editor.getModel()?.getLanguageId() ?? "html");
+    updateCode()
+    const action = editor.getAction('editor.action.formatDocument');
+    if (action) action.run();
   });
 
   // ctrl+,
@@ -624,20 +704,20 @@ onMounted(() => {
   });
 
   // const formatDocumentAction = editor.getAction("editor.action.formatDocument")
-  editor.addAction({
-    id: 'prettier-format',
-    label: 'Format with Prettier',
-    contextMenuGroupId: '1_modification',
-    contextMenuOrder: 2,
-    keybindings: [
-      monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF
-    ],
-    run: async (ed) => {
-      const code = ed.getValue();
-      const formatted = await formatCode(code, ed.getModel()?.getLanguageId() ?? "html");
-      ed.setValue(formatted);
-    }
-  });
+  // editor.addAction({
+  //   id: 'prettier-format',
+  //   label: 'Format with Prettier',
+  //   contextMenuGroupId: '1_modification',
+  //   contextMenuOrder: 2,
+  //   keybindings: [
+  //     monaco.KeyMod.Shift | monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF
+  //   ],
+  //   run: async (ed) => {
+  //     const code = ed.getValue();
+  //     const formatted = await formatCode(code, ed.getModel()?.getLanguageId() ?? "html");
+  //     ed.setValue(formatted);
+  //   }
+  // });
 
   watch(() => currentFile.value?.content, (newCode) => {
     if (currentFile.value && editor && editor.getValue() !== newCode) {

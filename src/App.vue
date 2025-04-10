@@ -59,9 +59,9 @@ import { computed, getCurrentInstance, onMounted, ref, useTemplateRef, watch } f
 import type { ChatOption } from "@/Interface"
 import { Notification } from '@arco-design/web-vue';
 import { useLocalStorage } from '@vueuse/core';
-import { defaultCode } from './Components/Code';
-import { getLines, getMessages } from './Request';
-const tab = ref("ai")
+import { DEFAULT_CODE } from '@/Helper/Code';
+import { getLines, getMessages } from '@/Helper/Request';
+const tab = ref("edit")
 const size = ref(0.5)
 const editor = useTemplateRef("editor")
 const docHtml = ref("")
@@ -70,7 +70,6 @@ const isLoading = ref(false)
 const response = ref(``)
 
 const refreshShow = ref(true)
-
 useLocalStorage("response", response)
 
 const vars = computed(() => ({
@@ -92,6 +91,7 @@ watch(response, (contentResponse: string) => {
   } else {
     partialDoc = partialDoc.slice(0, partialDoc.indexOf("</html>") + "</html>".length)
   }
+
   setEditorValue(partialDoc)
 })
 
@@ -107,7 +107,7 @@ const addEditorValue = (value: string) => {
 
 const clearResponse = () => {
   response.value = ""
-  setEditorValue(defaultCode)
+  setEditorValue(DEFAULT_CODE)
 }
 
 const handleRefresh = () => {
