@@ -34,6 +34,10 @@
             <input type="text" id="model" v-model="chatOption.model"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="gpt-3.5-turbo">
+            <!-- <a-select placeholder="Please select ..." :loading="false" allow-create v-model="chatOption.model"
+              @search="handleSearchModel" :filter-option="true">
+              <a-option v-for="model in models" :key="model.id" :value="model.id">{{ model.id }}</a-option>
+            </a-select> -->
           </div>
           <div>
             <label for="temperature" class="block text-sm font-medium text-gray-700 mb-1">
@@ -203,7 +207,7 @@
 import Close from "@/Icons/close.vue";
 import { useLocalStorage } from "@vueuse/core"
 import { cloneDeep } from "lodash-es";
-import { ref, watchEffect } from "vue"
+import { onMounted, ref, watchEffect } from "vue"
 import type { ChatOption } from "@/Interface"
 
 interface Props {
@@ -217,6 +221,18 @@ const isLoading = ref(false);
 const imageLoading = ref(false);
 
 const presets = ref<ChatOption[]>([])
+
+interface ModelOption {
+  created: number
+  id: string
+  object: string
+  owned_by: string
+  parent: string
+  permission: any[]
+  root: string
+}
+
+const models = ref<ModelOption[]>([])
 const chatOption = ref<ChatOption>({
   name: "",
   url: "",
@@ -326,6 +342,25 @@ const handleSelectPreset = (preset: ChatOption) => {
 const removePreset = (index: number) => {
   presets.value.splice(index, 1)
 }
+
+const getModels = async () => {
+  const res = await fetch(`${chatOption.value.url}/v1/models`, {
+    headers: {
+      "Authorization": `Bearer ${chatOption.value.token}`
+    }
+  })
+  const data = await res.json()
+  models.value = data?.data ?? []
+}
+
+const handleSearchModel = (value: string) => {
+  console.log(value);
+  if (models.value.length === 0) {
+    getModels()
+  }
+}
+
+// getModels()
 
 watchEffect(() => {
   if (chatOption.value.messages.length === 0) {

@@ -49,26 +49,26 @@ export let DEFAULT_CODE = `<!DOCTYPE html>
 </html>
 `
 
-DEFAULT_CODE = `<!DOCTYPE html>
-<HTML CLASS="no-js mY-ClAsS">
+// DEFAULT_CODE = `<!DOCTYPE html>
+// <HTML CLASS="no-js mY-ClAsS">
 
-<HEAD>
-                      <META CHARSET="utf-8">
-                      <TITLE>My tITlE</TITLE>
-                      <META NAME="description" content="My CoNtEnT">
-                    </HEAD>
+// <HEAD>
+//                       <META CHARSET="utf-8">
+//                       <TITLE>My tITlE</TITLE>
+//                       <META NAME="description" content="My CoNtEnT">
+//                     </HEAD>
 
-                    <body>
-  <P>Hello world!<BR> This is HTML5 Boilerplate.</P>
-                    <script>
-                          if (false)                {
-                                      			console.log(123)
-                              }
-                      </script>
+//                     <body>
+//   <P>Hello world!<BR> This is HTML5 Boilerplate.</P>
+//                     <script>
+//                           if (false)                {
+//                                       			console.log(123)
+//                               }
+//                       </script>
 
-</body>
+// </body>
 
-</HTML>`
+// </HTML>`
 
 export const DEFAULT_FORMAT_OPTIONS: PrettierOptions = {
   "arrowParens": "always",

@@ -453,12 +453,12 @@ const formatCode = async (code: string, language: string): Promise<string> => {
     const configContent = files.value[0].content;
     const config = JSON.parse(configContent);
     prettierOptions = config.prettier || {};
-    
+
   } catch (error) {
     console.error("读取配置失败:", error);
     prettierOptions = { ...DEFAULT_FORMAT_OPTIONS };
   }
-  
+
   // 使用Web Worker执行格式化
   const worker = new FormatWorker()
   return new Promise((resolve) => {
@@ -509,25 +509,25 @@ const registerFormatProvider = () => {
 
 // 自定义HTML代码折叠
 const registerFoldingRangeProvider = () => {
-    // 配置HTML折叠策略，使script标签内的代码可折叠
-    monaco.languages.registerFoldingRangeProvider('html', {
+  // 配置HTML折叠策略，使script标签内的代码可折叠
+  monaco.languages.registerFoldingRangeProvider('html', {
     provideFoldingRanges(model, context, token) {
       const text = model.getValue();
       const ranges = [];
-      
+
       // 查找所有script标签
       const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
       let match;
-      
+
       while ((match = scriptRegex.exec(text)) !== null) {
         if (match.index === scriptRegex.lastIndex) {
           scriptRegex.lastIndex++;
         }
-        
+
         // 计算起始行和结束行
         const startLine = model.getPositionAt(match.index).lineNumber;
         const endLine = model.getPositionAt(match.index + match[0].length).lineNumber;
-        
+
         // 添加折叠区域
         if (endLine > startLine) {
           ranges.push({
@@ -535,21 +535,21 @@ const registerFoldingRangeProvider = () => {
             end: endLine,
             kind: monaco.languages.FoldingRangeKind.Region
           });
-          
+
           // 如果script标签内容有多行，也为内部代码添加折叠
           const scriptContent = match[1];
           const scriptStartOffset = match.index + match[0].indexOf(scriptContent);
           const scriptLines = scriptContent.split('\n');
-          
+
           if (scriptLines.length > 2) {
             let innerStart = -1;
             let innerDepth = 0;
-            
+
             // 分析script内部代码结构，寻找可折叠块
             for (let i = 0; i < scriptLines.length; i++) {
               const line = scriptLines[i];
               const lineStartPos = model.getPositionAt(scriptStartOffset + scriptContent.indexOf(line)).lineNumber;
-              
+
               // 简单的折叠逻辑 - 检测{}括号
               if (line.includes('{')) {
                 if (innerStart === -1) {
@@ -557,7 +557,7 @@ const registerFoldingRangeProvider = () => {
                 }
                 innerDepth++;
               }
-              
+
               if (line.includes('}') && innerDepth > 0) {
                 innerDepth--;
                 if (innerDepth === 0 && innerStart !== -1) {
@@ -576,7 +576,7 @@ const registerFoldingRangeProvider = () => {
           }
         }
       }
-      
+
       return ranges;
     }
   });

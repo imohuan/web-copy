@@ -61,7 +61,7 @@ import { Notification } from '@arco-design/web-vue';
 import { useLocalStorage } from '@vueuse/core';
 import { DEFAULT_CODE } from '@/Helper/Code';
 import { getLines, getMessages } from '@/Helper/Request';
-const tab = ref("edit")
+const tab = ref("ai")
 const size = ref(0.5)
 const editor = useTemplateRef("editor")
 const docHtml = ref("")
@@ -134,6 +134,7 @@ const playNotificationSound = () => {
   oscillator.start(audioContext.currentTime)
   oscillator.stop(audioContext.currentTime + 0.5)
 }
+
 
 const sendRequest = async (option: ChatOption) => {
   let { url, token, model, messages, temperature, stream, max_tokens, renderMarkdown } = option
